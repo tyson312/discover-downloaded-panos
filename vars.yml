@@ -1,0 +1,4 @@
+fw:
+  ip_address: "{{ inventory_hostname}}"
+  username: admin
+  password: paloalto
