@@ -1,13 +1,11 @@
 # pb_gather-firmware.xml -- Ansible playbook to print downloaded PAN-OS firmware
 #   versions across multiple NFGW hosts
 #   Author: Tyson Reed, no implied warranty. Released under GPL
-#   v0.1 - June 14, 2019 - First attempt at script to grab
+#   v0.1 - June 14, 2019 
 #
 # STEPS
-# update vars.yml with your own credentials/settings
-#
-# Good practice: The var files are provided in cleartext. They should be edited and encrypred using:
-# ansible-vault encrypt firewall-secrets.yml
+# update vars.yml with valid user/password
+# update hosts with list of firewall addresses
 #
 # EXECUTE
 # ansible-playbook -i hosts pb_gather-firmware.yml
@@ -21,42 +19,31 @@
   vars:
     ansible_python_interpreter: /usr/bin/python
 
-
   roles:
     - role: PaloAltoNetworks.paloaltonetworks
 
   tasks:
   - name: Get credentials
-    include_vars: 'vars.yml'
-    no_log: 'yes'
+    include_vars: "vars.yml"
+    no_log: "yes"
 
   - name: Connect to firewall and gather facts
     panos_facts:
-      provider: '{{ fw }}'
-
-## This works
-#   - name: Write facts to disk
-#     copy: 
-#       content: |
-#         Hostname: {{ ansible_net_hostname }}       
-#         Serial: {{ ansible_net_serial }}
-#         PAN-OS Version: {{ ansible_net_version }}
-#       dest: panos-facts.txt
-
+      provider: "{{ fw }}"
 
   - name: Connect to firewall and run command
     panos_op:
-      provider: '{{ fw }}'
+      provider: "{{ fw }}"
       cmd: "request system software info"
-    register: panos
+    register: "panos"
+
+  - name: test debug
+    debug:
+      var: "item"
+    loop: "{{ panos | json_query(filter_query) }}"
+    vars: 
+      filter_query: "response.result[*]"
 
   - copy: 
       content: "{{ panos.stdout }}" 
       dest: "{{ ansible_net_serial }}_output.json"
-
-### old notes
-#    debug: msg='{{ result.stdout }}'
-#    shell: >
-#      echo {{ result.stdout }} 
-#      | jq '.response.result."sw-updates".versions.entry[] | select(.downloaded=="yes") | .version'
-#  - copy: content="{{ result.stdout }}" dest=output.json
