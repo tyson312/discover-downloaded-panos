@@ -15,7 +15,7 @@
 #
 ---
 - name: Gather downloaded PAN-OS versions from all firewalls
-  hosts: one
+  hosts: all
   connection: local
   gather_facts: false
 
@@ -65,13 +65,18 @@
     shell: cat {{ ansible_net_serial }}_output.json | jq '.response.result."sw-updates".versions.entry[] | select(.downloaded=="yes") | .version' | tr '\n' ', ' 
     register: versions
 
-  - name: debug
-    debug:
-      var: versions.stdout
-
+#   - name: debug
+#     debug:
+#       var: versions.stdout
+# 
   - name: write to output.txt
     lineinfile:
       line: "{{ ansible_net_hostname }}, {{ ansible_net_serial }}, {{ versions.stdout }}"
       insertafter: EOF
       dest: output.txt
     delegate_to: 127.0.0.1
+
+  - name: clean up temp file
+    file: 
+      path: "{{ ansible_net_serial }}_output.json"
+      state: absent
