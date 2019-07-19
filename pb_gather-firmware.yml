@@ -3,6 +3,9 @@
 #   Author: Tyson Reed, no implied warranty. Released under GPL
 #   v0.1 - June 14, 2019 
 #
+# REQUIRES
+# apt install jq
+#
 # STEPS
 # update vars.yml with valid user/password
 # update hosts with list of firewall addresses
@@ -57,4 +60,14 @@
       dest: "{{ ansible_net_serial }}_output.json"
 
   - name: process the file
-    shell: cat {{ ansible_net_serial }}_output.json | jq '.response.result."sw-updates".versions.entry[] | select(.downloaded=="yes") | .version' | tr '\n' ', ' > t
+    # this gets the versions but not the hostname
+    shell: cat {{ ansible_net_serial }}_output.json | jq '.response.result."sw-updates".versions.entry[] | select(.downloaded=="yes") | .version' | tr '\n' ', ' 
+    register: versions
+
+  - name: debug
+    debug:
+      var: versions.stdout
+
+  - copy:
+      content: "{{ ansible_net_serial }}, {{ versions.stdout }}"
+      dest: output.txt
