@@ -35,15 +35,26 @@
     panos_op:
       provider: "{{ fw }}"
       cmd: "request system software info"
-    register: "panos"
+    register: panos
+    # variable 'panos' contains the json array. works fine to this point
+    # display it with panos.stdout
+    # need to filter to downloaded only; concatenate to csv, append to file
 
-  - name: test debug
-    debug:
-      var: "item"
-    loop: "{{ panos | json_query(filter_query) }}"
-    vars: 
-      filter_query: "response.result[*]"
-
+#   - name: debug
+#     debug: 
+#       var: " (panos.stdout | from_json).response | json_query('result.sw-updates.versions.entry[*]') "
+# 
+#   - name: test debug
+#     debug:
+#       var: "item"
+#     loop: "{{ panos | json_query(filter_query) }}"
+#     vars: 
+#       filter_query: "response.result[*]"
+# 
+# works to copy entire json to file per ngfw serial number
   - copy: 
       content: "{{ panos.stdout }}" 
       dest: "{{ ansible_net_serial }}_output.json"
+
+  - name: process the file
+    shell: cat {{ ansible_net_serial }}_output.json | jq '.response.result."sw-updates".versions.entry[] | select(.downloaded=="yes") | .version' > t
