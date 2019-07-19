@@ -15,7 +15,7 @@
 #
 ---
 - name: Gather downloaded PAN-OS versions from all firewalls
-  hosts: all
+  hosts: one
   connection: local
   gather_facts: false
 
@@ -33,6 +33,7 @@
   - name: Connect to firewall and gather facts
     panos_facts:
       provider: "{{ fw }}"
+      gather_subset: ['system']
 
   - name: Connect to firewall and run command
     panos_op:
@@ -68,6 +69,9 @@
     debug:
       var: versions.stdout
 
-  - copy:
-      content: "{{ ansible_net_serial }}, {{ versions.stdout }}"
+  - name: write to output.txt
+    lineinfile:
+      line: "{{ ansible_net_hostname }}, {{ ansible_net_serial }}, {{ versions.stdout }}"
+      insertafter: EOF
       dest: output.txt
+    delegate_to: 127.0.0.1
