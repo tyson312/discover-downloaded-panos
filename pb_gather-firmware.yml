@@ -1,20 +1,25 @@
 # pb_gather-firmware.xml -- Ansible playbook to print downloaded PAN-OS firmware
 #   versions across multiple NFGW hosts
 #   Author: Tyson Reed, no implied warranty. Released under GPL
-#   v0.1 - June 14, 2019 
+#   v0.1 - June 14, 2019
 #
 # REQUIRES
 # apt install jq
+# file 'output.csv' must exist in the local folder
+# this has only been tested with python 2.7
 #
 # STEPS
 # update vars.yml with valid user/password
-# update hosts with list of firewall addresses
+# update hosts with list of firewall ip addresses
 #
 # EXECUTE
 # ansible-playbook -i hosts pb_gather-firmware.yml
 #
+# NOTES
+# var panos contains the json array returned by the host
+# var versions contains a string with the versions
 ---
-- name: Gather downloaded PAN-OS versions from all firewalls
+- name: GATHER DOWNLOADED PAN-OS VERSIONS FROM FIREWALLS
   hosts: all
   connection: local
   gather_facts: false
@@ -26,57 +31,39 @@
     - role: PaloAltoNetworks.paloaltonetworks
 
   tasks:
-  - name: Get credentials
+  - name: get credentials from file
     include_vars: "vars.yml"
     no_log: "yes"
 
-  - name: Connect to firewall and gather facts
+  - name: connect to each firewall and gather facts
     panos_facts:
       provider: "{{ fw }}"
       gather_subset: ['system']
 
-  - name: Connect to firewall and run command
+  - name: connect to each firewall and run command to gather image versions
     panos_op:
       provider: "{{ fw }}"
       cmd: "request system software info"
     register: panos
-    # variable 'panos' contains the json array. works fine to this point
-    # display it with panos.stdout
-    # need to filter to downloaded only; concatenate to csv, append to file
 
-#   - name: debug
-#     debug: 
-#       var: " (panos.stdout | from_json).response | json_query('result.sw-updates.versions.entry[*]') "
-# 
-#   - name: test debug
-#     debug:
-#       var: "item"
-#     loop: "{{ panos | json_query(filter_query) }}"
-#     vars: 
-#       filter_query: "response.result[*]"
-# 
-# works to copy entire json to file per ngfw serial number
-  - copy: 
-      content: "{{ panos.stdout }}" 
+  # copy the json array to a temporary file so we can maniplate it with shell utilities
+  - name: copy to temp file
+    copy:
+      content: "{{ panos.stdout }}"
       dest: "{{ ansible_net_serial }}_output.json"
 
-  - name: process the file
-    # this gets the versions but not the hostname
-    shell: cat {{ ansible_net_serial }}_output.json | jq '.response.result."sw-updates".versions.entry[] | select(.downloaded=="yes") | .version' | tr '\n' ', ' 
+  - name: collect only downloaded versions from temporary file
+    shell: cat {{ ansible_net_serial }}_output.json | jq '.response.result."sw-updates".versions.entry[] | select(.downloaded=="yes") | .version' | tr '\n' ',' | tr -d \"
     register: versions
 
-#   - name: debug
-#     debug:
-#       var: versions.stdout
-# 
-  - name: write to output.txt
+  - name: write record to output.csv
     lineinfile:
-      line: "{{ ansible_net_hostname }}, {{ ansible_net_serial }}, {{ versions.stdout }}"
+      line: "{{ ansible_net_hostname }},{{ ansible_net_serial }},{{ versions.stdout }}"
       insertafter: EOF
-      dest: output.txt
+      dest: output.csv
     delegate_to: 127.0.0.1
 
   - name: clean up temp file
-    file: 
+    file:
       path: "{{ ansible_net_serial }}_output.json"
       state: absent
