@@ -57,4 +57,4 @@
       dest: "{{ ansible_net_serial }}_output.json"
 
   - name: process the file
-    shell: cat {{ ansible_net_serial }}_output.json | jq '.response.result."sw-updates".versions.entry[] | select(.downloaded=="yes") | .version' > t
+    shell: cat {{ ansible_net_serial }}_output.json | jq '.response.result."sw-updates".versions.entry[] | select(.downloaded=="yes") | .version' | tr '\n' ', ' > t
