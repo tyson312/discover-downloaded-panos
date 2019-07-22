@@ -10,12 +10,14 @@ These are listed in the playbook as well but:
 * edit hosts file to include ip addresses of your ngfw to check
 * edit vars.yml to include a valid username/password for your floeet
 * run: 
-``` ansible-playbook -i hosts ./pb_gather-firmware.yml
+``` 
+ansible-playbook -i hosts ./pb_gather-firmware.yml
 ```
 review results in output.csv
 
 If you want to see hosts that _don't_ contain a particular version of PAN-OS, you can use
-``` grep -v 8.0.0 output.csv
+``` 
+grep -v 8.0.0 output.csv
 ```
 
 ### dependency notes
