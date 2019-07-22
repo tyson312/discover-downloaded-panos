@@ -25,7 +25,7 @@
   gather_facts: false
 
   vars:
-    ansible_python_interpreter: /usr/bin/python
+    ansible_python_interpreter: /usr/local/bin/python
 
   roles:
     - role: PaloAltoNetworks.paloaltonetworks
