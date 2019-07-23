@@ -4,7 +4,7 @@ Ansible script to discover downloaded PAN-OS versions across fleet of hosts. Use
 ### Requirements
 * this has been tested with python-2.7
 * you must have 'jq' tooling installed: `sudo apt install jq`
-* the file `output.csv` must exist (empty or not) in the playbook folder
+* the file `output.csv` must exist (empty or not) in the playbook folder. There is a task that will create this if it is missing. Contents will be replaced when the playbook is run so save it elsewhere if you want to keep a copy.
 
 ### Usage
 * edit `hosts` file to include ip addresses of your ngfw to check

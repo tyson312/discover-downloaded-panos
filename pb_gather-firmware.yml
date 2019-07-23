@@ -31,6 +31,18 @@
     - role: PaloAltoNetworks.paloaltonetworks
 
   tasks:
+
+  - name: check if required output.csv file present
+    stat:
+      path: ./output.csv
+    register: csv_exists
+
+  - name: create empty output.csv file
+    file:
+      path: ./output.csv
+      state: touch
+    when: csv_exists.stat.exists != True
+
   - name: get credentials from file
     include_vars: "vars.yml"
     no_log: "yes"
