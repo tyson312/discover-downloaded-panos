@@ -29,3 +29,4 @@ pip install --user pandevice
 pip install --user xmltodict
 ```
 
+_This code is my own. Provided without warranty or affilitation with Palo Alto Networks. _
